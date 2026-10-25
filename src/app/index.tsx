@@ -1,98 +1,92 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+// src/app/index.tsx
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { AuthProvider, useAuth } from '../context/AuthContext';
+import { LoginScreen } from '../screens/LoginScreen';
+import { CoursesScreen } from '../screens/CoursesScreen';
+import { CalendarScreen } from '../screens/CalendarScreen';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+function MainApp() {
+  const { user, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState<'COURSES' | 'CALENDAR'>('COURSES');
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
+  if (loading) {
     return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1e6bb8' }}>
+        <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#fff', marginBottom: 20 }}>Quiz Platform</Text>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
     );
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
+  if (!user) {
+    return <LoginScreen />;
+  }
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <View style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        {activeTab === 'COURSES' ? <CoursesScreen /> : <CalendarScreen />}
+      </View>
+      
+      {/* Donja traka za navigaciju */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity 
+          style={styles.tabItem} 
+          onPress={() => setActiveTab('COURSES')}
+        >
+          <Text style={[styles.tabIcon, activeTab === 'COURSES' && styles.activeTab]}>📚</Text>
+          <Text style={[styles.tabLabel, activeTab === 'COURSES' && styles.activeTabText]}>Predmeti</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.tabItem} 
+          onPress={() => setActiveTab('CALENDAR')}
+        >
+          <Text style={[styles.tabIcon, activeTab === 'CALENDAR' && styles.activeTab]}>📅</Text>
+          <Text style={[styles.tabLabel, activeTab === 'CALENDAR' && styles.activeTabText]}>Kalendar</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
-export default function HomeScreen() {
+export default function AppEntry() {
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
+  tabBar: {
     flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    paddingBottom: 20, // Da ne bi prekrivalo dugme "nazad" na telefonima
+    paddingTop: 10,
   },
-  safeArea: {
+  tabItem: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
   },
-  title: {
-    textAlign: 'center',
+  tabIcon: {
+    fontSize: 24,
+    marginBottom: 4,
+    opacity: 0.5,
   },
-  code: {
-    textTransform: 'uppercase',
+  tabLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6b7280',
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  activeTab: {
+    opacity: 1,
+  },
+  activeTabText: {
+    color: '#1e6bb8',
   },
 });
